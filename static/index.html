@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShopEasy Smart Notifications — Send less. Mean more.</title>
+  <meta name="description" content="Intelligent e-commerce notification manager that learns customer preferences and prevents alert fatigue.">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- HEADER -->
+  <header class="app-header" id="app-header">
+    <div class="header-left">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 0 1-8 0"/>
+        </svg>
+        <div class="brand-text">
+          <span class="brand-name">ShopEasy</span>
+          <span class="brand-tagline">Send less. Mean more.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <nav class="tabs-nav" id="tabs-nav" aria-label="Main Navigation">
+      <button class="tab-btn active" id="tab-btn-1" data-tab="tab-simulate">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <span>Simulate Customers</span>
+      </button>
+
+      <button class="tab-btn" id="tab-btn-2" data-tab="tab-notifications">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span>Customer Notifications</span>
+      </button>
+
+      <button class="tab-btn" id="tab-btn-3" data-tab="tab-insights">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 3v18h18"/>
+          <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+        </svg>
+        <span>Customer Insights</span>
+      </button>
+    </nav>
+
+    <!-- HEADER CONTROLS -->
+    <div class="header-right">
+      <button class="btn btn-secondary" id="auto-demo-btn" title="Run 60-second automatic demonstration">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+        <span>Auto Demo</span>
+      </button>
+
+      <button class="btn btn-ghost" id="reset-btn" title="Reset all simulation data (Shortcut: R)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+        </svg>
+        <span>Reset</span>
+      </button>
+
+      <button class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle light and dark theme">
+        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- AUTO DEMO FLOATING BAR -->
+  <div class="demo-controller hidden" id="demo-controller">
+    <div class="demo-info">
+      <span class="demo-pulse"></span>
+      <span class="demo-title" id="demo-status-text">Auto Demo Playing...</span>
+    </div>
+    <div class="demo-progress-track">
+      <div class="demo-progress-fill" id="demo-progress-fill"></div>
+    </div>
+    <div class="demo-actions">
+      <button class="btn btn-sm btn-secondary" id="demo-pause-btn">Pause</button>
+      <button class="btn btn-sm btn-ghost" id="demo-stop-btn">Stop</button>
+    </div>
+  </div>
+
+  <!-- MAIN APP CONTAINER -->
+  <main class="app-main">
+
+    <!-- ================================================================= -->
+    <!-- TAB 1: SIMULATE CUSTOMERS -->
+    <!-- ================================================================= -->
+    <section class="tab-panel active" id="tab-simulate">
+      <!-- Friendly Intro -->
+      <div class="intro-banner">
+        <div class="intro-content">
+          <h1 class="intro-headline">Personalized notifications that prevent customer fatigue</h1>
+          <p class="intro-body">
+            Most companies send every customer the same flood of notifications until shoppers tune them out or unsubscribe entirely.
+            ShopEasy watches what each person actually values, detects fading interest early, and tailors both categories and frequency so every message matters.
+          </p>
+        </div>
+        <div class="intro-controls">
+          <label class="toggle-switch-wrapper" title="Show or hide what behavioral role each customer plays">
+            <span class="toggle-label">Show role hints</span>
+            <input type="checkbox" id="role-hints-toggle">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Action Bar -->
+      <div class="simulate-toolbar">
+        <div class="toolbar-left">
+          <span class="section-label">Select a customer below to act on their alerts:</span>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn btn-secondary" id="play-customer-btn" title="Auto-fills the remaining weeks for selected customer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            <span>Play this customer for me</span>
+          </button>
+          <button class="btn btn-primary" id="load-sample-btn" title="Loads standard sample behavior for all 10 scripted personas">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="8.5" cy="7" r="4"/>
+              <polyline points="17 11 19 13 23 9"/>
+            </svg>
+            <span>Load sample behaviour</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Simulation Layout (Customer Grid + Interactive Phone) -->
+      <div class="simulate-layout">
+        <!-- Customer Cards Grid -->
+        <div class="customer-cards-grid" id="customer-cards-container">
+          <!-- Populated by JavaScript -->
+        </div>
+
+        <!-- Phone Mockup Container -->
+        <div class="phone-wrapper">
+          <div class="phone-device">
+            <!-- Speaker Notch / Island -->
+            <div class="phone-notch">
+              <div class="phone-camera"></div>
+              <div class="phone-speaker"></div>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="phone-status-bar">
+              <span class="phone-clock">9:41</span>
+              <div class="phone-status-icons">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L12 22l7.03-4.39C20.26 16.07 21 14.12 21 12c0-4.97-4.03-9-9-9z"/></svg>
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+              </div>
+            </div>
+
+            <!-- Phone Screen Content -->
+            <div class="phone-screen" id="sim-phone-screen">
+              <div class="phone-screen-header">
+                <div class="phone-cust-badge">
+                  <div class="avatar-mini" id="phone-avatar">AA</div>
+                  <div>
+                    <div class="phone-cust-name" id="phone-cust-name">Aarav</div>
+                    <div class="phone-cust-sub" id="phone-cust-sub">Week 1 of 5 • 6 alerts to review</div>
+                  </div>
+                </div>
+                <div class="week-progress-badge" id="phone-week-badge">Week 1</div>
+              </div>
+
+              <!-- Notifications list to act on -->
+              <div class="phone-notifs-stream" id="sim-notifs-stream">
+                <!-- Notifications injected here -->
+              </div>
+
+              <!-- Submit Button Bar -->
+              <div class="phone-screen-footer" id="sim-phone-footer">
+                <button class="btn btn-primary btn-block" id="submit-week-btn" disabled>
+                  <span>Submit week</span>
+                </button>
+                <div class="footer-help-text" id="submit-help-text">Choose an action for all 6 alerts to submit</div>
+              </div>
+            </div>
+
+            <!-- Home Bar Indicator -->
+            <div class="phone-home-indicator"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prominent Run System Transition Area -->
+      <div class="run-system-banner hidden" id="run-system-banner">
+        <div class="run-banner-content">
+          <div class="run-banner-badge">All 5 Weeks Completed</div>
+          <h2 class="run-banner-title">Ready to see how ShopEasy personalizes every customer's alerts</h2>
+          <p class="run-banner-desc">
+            The system will analyze individual engagement patterns, identify cooling interest, and optimize both frequency and notification categories.
+          </p>
+        </div>
+        <button class="btn btn-success btn-lg" id="run-system-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          <span>Run System</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB 2: CUSTOMER NOTIFICATIONS -->
+    <!-- ================================================================= -->
+    <section class="tab-panel" id="tab-notifications">
+      <div class="tab-header-strip">
+        <div>
+          <h2 class="tab-title">Customer Notifications</h2>
+          <p class="tab-subtitle">See the exact personalized schedule each customer will receive from now on.</p>
+        </div>
+        <div class="compare-toggle-box">
+          <label class="toggle-switch-wrapper" title="Compare tailored notifications against the uniform 12-alert broadcast">
+            <span class="toggle-label">Compare with before</span>
+            <input type="checkbox" id="compare-toggle">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="notifications-layout">
+        <!-- Customer Selector Sidebar -->
+        <div class="cust-sidebar">
+          <div class="sidebar-header">
+            <span>Customers</span>
+            <span class="status-legend">
+              <span class="legend-dot green" title="Engaged"></span>
+              <span class="legend-dot amber" title="Losing interest"></span>
+              <span class="legend-dot red" title="At risk of leaving"></span>
+              <span class="legend-dot grey" title="Unsubscribed"></span>
+            </span>
+          </div>
+          <div class="cust-sidebar-list" id="notif-cust-list">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+        <!-- Phone Output Display -->
+        <div class="phone-wrapper output-phone-wrapper">
+          <div class="phone-device">
+            <div class="phone-notch">
+              <div class="phone-camera"></div>
+              <div class="phone-speaker"></div>
+            </div>
+
+            <div class="phone-status-bar">
+              <span class="phone-clock">9:41</span>
+              <div class="phone-status-icons">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L12 22l7.03-4.39C20.26 16.07 21 14.12 21 12c0-4.97-4.03-9-9-9z"/></svg>
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+              </div>
+            </div>
+
+            <div class="phone-screen" id="output-phone-screen">
+              <div class="phone-screen-header">
+                <div class="phone-cust-badge">
+                  <div class="avatar-mini" id="out-phone-avatar">AA</div>
+                  <div>
+                    <div class="phone-cust-name" id="out-phone-name">Aarav</div>
+                    <div class="phone-count-line" id="out-phone-count">4 notifications this week</div>
+                  </div>
+                </div>
+                <div class="status-indicator-pill" id="out-status-pill">Engaged</div>
+              </div>
+
+              <!-- Output Stream -->
+              <div class="phone-notifs-stream" id="out-notifs-stream">
+                <!-- Notifications list -->
+              </div>
+
+              <!-- Action Bar inside output phone -->
+              <div class="phone-screen-footer" id="out-phone-footer">
+                <button class="btn btn-primary btn-block" id="continue-customer-btn">
+                  <span>Continue as this customer</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="phone-home-indicator"></div>
+          </div>
+        </div>
+
+        <!-- Continued Week Interactive Drawer (Hidden unless continuing) -->
+        <div class="continued-drawer hidden" id="continued-drawer">
+          <div class="drawer-header">
+            <h3>Continuing as <span id="cont-cust-name">Aarav</span></h3>
+            <p>Here is your next tailored week. Review and act on notifications to see how the system adapts live.</p>
+          </div>
+          <div class="drawer-stream" id="cont-notifs-stream">
+            <!-- Continued interactive cards -->
+          </div>
+          <div class="drawer-footer">
+            <button class="btn btn-primary" id="cont-submit-btn" disabled>Submit actions & update</button>
+            <button class="btn btn-ghost" id="cont-cancel-btn">Close</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB 3: CUSTOMER INSIGHTS -->
+    <!-- ================================================================= -->
+    <section class="tab-panel" id="tab-insights">
+      <!-- Top Metrics Ribbon -->
+      <div class="insights-ribbon">
+        <div class="metric-card">
+          <div class="metric-dot green"></div>
+          <div class="metric-value" id="metric-engaged">0</div>
+          <div class="metric-label">Engaged</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-dot amber"></div>
+          <div class="metric-value" id="metric-losing">0</div>
+          <div class="metric-label">Losing interest</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-dot red"></div>
+          <div class="metric-value" id="metric-risk">0</div>
+          <div class="metric-label">At risk</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-dot grey"></div>
+          <div class="metric-value" id="metric-unsub">0</div>
+          <div class="metric-label">Unsubscribed</div>
+        </div>
+        <div class="metric-card highlight-card">
+          <div class="metric-value highlight-num" id="metric-avoided">0</div>
+          <div class="metric-label">Notifications avoided this week compared with sending everyone the standard bundle of 12</div>
+        </div>
+      </div>
+
+      <!-- Insights Layout -->
+      <div class="insights-layout">
+        <!-- Customer List -->
+        <div class="cust-sidebar">
+          <div class="sidebar-header">
+            <span>Select Customer</span>
+          </div>
+          <div class="cust-sidebar-list" id="insights-cust-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Detailed Customer Insights Panel -->
+        <div class="insights-detail-panel" id="insights-detail-panel">
+          <!-- Customer Header -->
+          <div class="insight-header">
+            <div class="cust-profile">
+              <div class="avatar-large" id="ins-avatar">AA</div>
+              <div>
+                <h2 class="ins-name" id="ins-name">Aarav</h2>
+                <div class="ins-top-interest" id="ins-top-interest">Top interest: Offers & Sales</div>
+              </div>
+            </div>
+            <div class="ins-status-badge" id="ins-status-badge">Engaged</div>
+          </div>
+
+          <!-- Section 1 & 2: Interests & Trend Chart -->
+          <div class="insight-two-col">
+            <!-- (1) Interests -->
+            <div class="card insight-card">
+              <div class="card-title">Interests</div>
+              <div class="interests-list" id="ins-interests-list">
+                <!-- Interest bars -->
+              </div>
+            </div>
+
+            <!-- (2) Engagement Over Time -->
+            <div class="card insight-card">
+              <div class="card-title-row">
+                <span class="card-title">Engagement over time</span>
+                <span class="trend-badge" id="ins-trend-badge">Steady</span>
+              </div>
+              <div class="chart-container" id="ins-chart-container">
+                <!-- SVG Line Chart Injected Here -->
+              </div>
+              <div class="chart-caption">Weekly interaction level across weeks 1 to 5</div>
+            </div>
+          </div>
+
+          <!-- Section 3 & 4: Likely Behavior & Key Observations -->
+          <div class="insight-two-col">
+            <!-- (3) Likely Behaviour -->
+            <div class="card insight-card">
+              <div class="card-title-row">
+                <span class="card-title">Likely behaviour</span>
+                <span class="risk-badge" id="ins-risk-badge">Risk: Low</span>
+              </div>
+              <p class="likely-behavior-text" id="ins-likely-behavior">
+                Consistently responsive to relevant alerts and values shopping updates.
+              </p>
+            </div>
+
+            <!-- (4) Key Observations -->
+            <div class="card insight-card">
+              <div class="card-title">Key observations</div>
+              <ul class="observations-list" id="ins-observations-list">
+                <!-- Bullet list -->
+              </ul>
+            </div>
+          </div>
+
+          <!-- Section 5 & 6: Decisions & Recommended Action -->
+          <div class="insight-two-col">
+            <!-- (5) Decisions -->
+            <div class="card insight-card">
+              <div class="card-title">Notification Decisions</div>
+              <div class="frequency-indicator" id="ins-frequency-line">
+                <strong>8 notifications per week</strong>
+              </div>
+              <div class="decisions-container" id="ins-decisions-container">
+                <!-- Continued and paused types -->
+              </div>
+            </div>
+
+            <!-- (6) Recommended Action -->
+            <div class="card insight-card action-card">
+              <div class="card-title">Recommended action</div>
+              <div class="rec-action-box" id="ins-rec-action-box">
+                <div class="rec-action-icon" id="ins-rec-action-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="rec-action-title" id="ins-rec-action-title">No action needed</div>
+                  <div class="rec-action-desc" id="ins-rec-action-desc">
+                    Customer is naturally engaged. Maintain the personalized notification schedule.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- CONFIRMATION MODAL (Reset) -->
+  <div class="modal-backdrop hidden" id="reset-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Reset Simulation?</h3>
+      </div>
+      <div class="modal-body">
+        <p>This will clear all simulation actions, progress, and decisions, returning all customers to Week 1.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="reset-cancel-btn">Cancel</button>
+        <button class="btn btn-danger" id="reset-confirm-btn">Reset everything</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOADING OVERLAY ("Getting to know your customers...") -->
+  <div class="loading-overlay hidden" id="loading-overlay">
+    <div class="loading-card">
+      <div class="loading-spinner"></div>
+      <h3 class="loading-title">Getting to know your customers...</h3>
+      <p class="loading-desc">Analyzing engagement habits and tailoring each customer's schedule.</p>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
