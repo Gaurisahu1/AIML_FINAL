@@ -6,7 +6,7 @@ and static web files (plain HTML/CSS/vanilla JS).
 
 import os
 import copy
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -28,6 +28,16 @@ from engine.policy import (
     FREQUENCY_HIGH_RISK
 )
 from engine.messages import get_message_for_customer
+from engine.delivery import (
+    CATEGORY_ITEMS,
+    TYPE_HIGHLIGHTS,
+    decide,
+    generate_message_text,
+    get_slot_from_time_string,
+    SLOT_ORDER,
+    SLOT_DISPLAY_NAMES,
+    SLOT_TIME_STRINGS
+)
 
 app = FastAPI(title="ShopEasy Smart Notifications")
 
@@ -69,7 +79,10 @@ def create_initial_state():
         "customers": customers_dict,
         "selected_customer_id": "aarav",
         "system_run": False,
-        "standard_bundle": generate_standard_bundle()
+        "standard_bundle": generate_standard_bundle(),
+        "demo_time": "afternoon",
+        "composed_items": [],
+        "compose_variant_seed": 0
     }
 
 
@@ -148,7 +161,8 @@ def get_state():
         "selected_customer": sel_cust,
         "system_run": STATE["system_run"],
         "summary_metrics": compute_summary_metrics(),
-        "standard_bundle": STATE["standard_bundle"]
+        "standard_bundle": STATE["standard_bundle"],
+        "demo_time": STATE.get("demo_time", "afternoon")
     }
 
 
@@ -418,6 +432,266 @@ def submit_continued_round(customer_id: str, submission: WeekSubmission):
         "restored_types": restored_types,
         "summary_metrics": compute_summary_metrics()
     }
+
+
+# =====================================================================
+# COMPOSE & NOTIFICATION DELIVERY API
+# =====================================================================
+
+class ComposeOptionsRequest(BaseModel):
+    type: Optional[str] = None
+    category: Optional[str] = None
+
+
+@app.post("/api/compose/options")
+def get_compose_options(req: Optional[ComposeOptionsRequest] = None):
+    req_type = req.type if req else None
+    req_cat = req.category if req else None
+
+    if req_cat and req_cat not in CATEGORY_ITEMS:
+        raise HTTPException(status_code=400, detail=f"Category '{req_cat}' is not recognized.")
+    if req_type and req_type not in TYPE_HIGHLIGHTS:
+        raise HTTPException(status_code=400, detail=f"Notification type '{req_type}' is not recognized.")
+
+    items = CATEGORY_ITEMS.get(req_cat, []) if req_cat else []
+    highlights = TYPE_HIGHLIGHTS.get(req_type, []) if req_type else []
+
+    return {
+        "ok": True,
+        "categories": list(CATEGORY_ITEMS.keys()),
+        "types": list(TYPE_HIGHLIGHTS.keys()),
+        "items": items,
+        "highlights": highlights
+    }
+
+
+class ComposeGenerateRequest(BaseModel):
+    customer_id: str
+    type: str
+    category: str
+    item: str
+    highlight: str
+    urgency: Optional[str] = "normal"
+    demo_time: Optional[str] = "afternoon"
+
+
+DEMO_LEVELS = {
+    "morning": 1,
+    "afternoon": 2,
+    "evening": 3,
+    "late_night": 4,
+    "next_morning": 5,
+    "next_afternoon": 6,
+    "next_evening": 7
+}
+
+
+def get_scheduled_item_level(scheduled_time_str: Optional[str]) -> int:
+    if not scheduled_time_str:
+        return 999
+    s = scheduled_time_str.lower()
+    if "next week" in s:
+        return 100
+    if "today" in s:
+        if "evening" in s or "7:30" in s:
+            return 3
+        if "afternoon" in s or "2:00" in s:
+            return 2
+        if "morning" in s or "9:30" in s or "9:00" in s:
+            return 1
+        return 3
+    if "tomorrow" in s or "next day" in s:
+        if "evening" in s or "7:30" in s:
+            return 7
+        if "afternoon" in s or "2:00" in s:
+            return 6
+        if "morning" in s or "9:30" in s or "9:00" in s:
+            return 5
+        return 5
+    return 999
+
+
+@app.post("/api/compose/generate")
+def compose_generate(req: ComposeGenerateRequest):
+    if not STATE.get("system_run"):
+        raise HTTPException(status_code=400, detail="Run the system first so we can learn what each customer likes.")
+
+    cust = STATE["customers"].get(req.customer_id)
+    if not cust:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    if req.category not in CATEGORY_ITEMS:
+        raise HTTPException(status_code=400, detail=f"Category '{req.category}' is not valid.")
+    if req.item not in CATEGORY_ITEMS[req.category]:
+        raise HTTPException(status_code=400, detail=f"Item '{req.item}' does not belong to category '{req.category}'.")
+
+    if req.type not in TYPE_HIGHLIGHTS:
+        raise HTTPException(status_code=400, detail=f"Notification type '{req.type}' is not valid.")
+    if req.highlight not in TYPE_HIGHLIGHTS[req.type]:
+        raise HTTPException(status_code=400, detail=f"Highlight '{req.highlight}' does not belong to notification type '{req.type}'.")
+
+    urgency = "essential" if req.type == "order_update" else (req.urgency or "normal")
+    demo_time = req.demo_time or STATE.get("demo_time", "afternoon")
+
+    # Generate message text using seeded variant cycle
+    STATE["compose_variant_seed"] = STATE.get("compose_variant_seed", 0) + 1
+    msg_text = generate_message_text(req.type, req.item, req.highlight, STATE["compose_variant_seed"])
+
+    # Decision engine evaluation
+    decision_result = decide(
+        cust,
+        {"type": req.type, "urgency": urgency},
+        demo_time,
+        STATE.get("composed_items", [])
+    )
+
+    item_id = f"comp_{len(STATE.get('composed_items', [])) + 1}"
+    decision = decision_result["decision"]
+    status = "sent" if decision == "send_now" else ("scheduled" if decision == "schedule" else "not_sent")
+
+    comp_item = {
+        "id": item_id,
+        "customer_id": req.customer_id,
+        "customer_name": cust["name"],
+        "type": req.type,
+        "type_name": TYPE_DISPLAY_NAMES.get(req.type, req.type),
+        "category": req.category,
+        "item": req.item,
+        "highlight": req.highlight,
+        "urgency": urgency,
+        "text": msg_text,
+        "decision": decision,
+        "scheduled_time": decision_result.get("scheduled_time"),
+        "reason": decision_result["reason"],
+        "status": status,
+        "created_time": "Just now",
+        "demo_time": demo_time
+    }
+
+    if decision == "send_now":
+        if cust.get("continued_notifications") is None:
+            cust["continued_notifications"] = []
+        new_notif = {
+            "id": f"notif_{item_id}",
+            "type": req.type,
+            "type_name": TYPE_DISPLAY_NAMES.get(req.type, req.type),
+            "day": "Today",
+            "time": "Just now",
+            "text": msg_text,
+            "action": None
+        }
+        cust["continued_notifications"].insert(0, new_notif)
+
+    STATE.setdefault("composed_items", []).append(comp_item)
+
+    inbox_count = len(cust.get("continued_notifications") or [])
+    return {
+        "ok": True,
+        "item": comp_item,
+        "customer": cust,
+        "inbox_count": inbox_count
+    }
+
+
+class ComposeOverrideRequest(BaseModel):
+    item_id: str
+
+
+@app.post("/api/compose/override")
+def compose_override(req: ComposeOverrideRequest):
+    item = next((i for i in STATE.get("composed_items", []) if i["id"] == req.item_id), None)
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    item["status"] = "sent"
+    item["decision"] = "send_now"
+
+    cust = STATE["customers"].get(item["customer_id"])
+    if cust:
+        if cust.get("continued_notifications") is None:
+            cust["continued_notifications"] = []
+        notif_id = f"notif_{item['id']}"
+        if not any(n.get("id") == notif_id for n in cust["continued_notifications"]):
+            new_notif = {
+                "id": notif_id,
+                "type": item["type"],
+                "type_name": TYPE_DISPLAY_NAMES.get(item["type"], item["type"]),
+                "day": "Today",
+                "time": "Just now",
+                "text": item["text"],
+                "action": None
+            }
+            cust["continued_notifications"].insert(0, new_notif)
+
+    inbox_count = len(cust.get("continued_notifications") or []) if cust else 0
+    return {"ok": True, "item": item, "customer": cust, "inbox_count": inbox_count}
+
+
+class ComposeCancelRequest(BaseModel):
+    item_id: str
+
+
+@app.post("/api/compose/cancel")
+def compose_cancel(req: ComposeCancelRequest):
+    item = next((i for i in STATE.get("composed_items", []) if i["id"] == req.item_id), None)
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    if item.get("status") == "scheduled":
+        item["status"] = "cancelled"
+
+    return {"ok": True, "item": item}
+
+
+class ComposeAdvanceRequest(BaseModel):
+    demo_time: str
+
+
+@app.post("/api/compose/advance")
+def compose_advance(req: ComposeAdvanceRequest):
+    new_lvl = DEMO_LEVELS.get(req.demo_time, 2)
+    old_lvl = DEMO_LEVELS.get(STATE.get("demo_time", "afternoon"), 2)
+    STATE["demo_time"] = req.demo_time
+
+    delivered_items = []
+    if new_lvl > old_lvl:
+        for item in STATE.get("composed_items", []):
+            if item.get("status") == "scheduled":
+                item_lvl = get_scheduled_item_level(item.get("scheduled_time"))
+                if item_lvl <= new_lvl:
+                    item["status"] = "sent"
+                    cust = STATE["customers"].get(item["customer_id"])
+                    if cust:
+                        if cust.get("continued_notifications") is None:
+                            cust["continued_notifications"] = []
+                        notif_id = f"notif_{item['id']}"
+                        if not any(n.get("id") == notif_id for n in cust["continued_notifications"]):
+                            new_notif = {
+                                "id": notif_id,
+                                "type": item["type"],
+                                "type_name": TYPE_DISPLAY_NAMES.get(item["type"], item["type"]),
+                                "day": "Today",
+                                "time": "Just now",
+                                "text": item["text"],
+                                "action": None
+                            }
+                            cust["continued_notifications"].insert(0, new_notif)
+                    delivered_items.append(item)
+
+    return {
+        "ok": True,
+        "demo_time": req.demo_time,
+        "delivered_items": delivered_items,
+        "selected_customer": STATE["customers"].get(STATE["selected_customer_id"])
+    }
+
+
+@app.get("/api/compose/activity")
+def get_compose_activity(customer_id: str):
+    if customer_id not in STATE["customers"]:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    all_items = [i for i in STATE.get("composed_items", []) if i.get("customer_id") == customer_id]
+    return {"ok": True, "items": list(reversed(all_items))[:5]}
 
 
 @app.post("/api/reset")

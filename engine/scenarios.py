@@ -23,12 +23,12 @@ CUSTOMERS = [
 
 # Days and hours distribution for a week's 6 notifications
 WEEK_SCHEDULE = [
-    {"day_name": "Mon", "time": "10:15 AM"},
-    {"day_name": "Tue", "time": "2:30 PM"},
-    {"day_name": "Wed", "time": "6:45 PM"},
-    {"day_name": "Thu", "time": "11:20 AM"},
-    {"day_name": "Fri", "time": "5:10 PM"},
-    {"day_name": "Sat", "time": "1:00 PM"}
+    {"day_name": "Mon", "time": "10:15 AM", "slot": "morning"},
+    {"day_name": "Tue", "time": "2:30 PM", "slot": "afternoon"},
+    {"day_name": "Wed", "time": "6:45 PM", "slot": "evening"},
+    {"day_name": "Thu", "time": "11:20 AM", "slot": "morning"},
+    {"day_name": "Fri", "time": "5:10 PM", "slot": "evening"},
+    {"day_name": "Sat", "time": "1:00 PM", "slot": "afternoon"}
 ]
 
 
@@ -58,6 +58,7 @@ def generate_week_notifications(customer_id, week_num):
             "text": msg,
             "day_name": sched["day_name"],
             "time": sched["time"],
+            "slot": sched.get("slot", "afternoon"),
             "action": None,  # User fills this
             "duration": "few_seconds",
             "timing": "right_away",

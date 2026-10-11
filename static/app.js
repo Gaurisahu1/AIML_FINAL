@@ -19,7 +19,20 @@
     autoDemoRunning: false,
     autoDemoPaused: false,
     autoDemoTimer: null,
-    autoDemoStep: 0
+    autoDemoStep: 0,
+    tab2Subview: "inboxes",
+    demoTime: "afternoon",
+    composeState: {
+      customerId: "aarav",
+      type: "offer",
+      category: "Fashion",
+      item: "Sneakers",
+      highlight: "20% off",
+      urgency: "normal",
+      isSubmitting: false,
+      lastEvaluatedItem: null
+    },
+    activeModal: null
   };
 
   // DOM Elements Cache
@@ -68,6 +81,55 @@
     contNotifsStream: document.getElementById("cont-notifs-stream"),
     contSubmitBtn: document.getElementById("cont-submit-btn"),
     contCancelBtn: document.getElementById("cont-cancel-btn"),
+
+    // Tab 2 Segmented Control & Compose Elements
+    segInboxesBtn: document.getElementById("seg-inboxes-btn"),
+    segComposeBtn: document.getElementById("seg-compose-btn"),
+    subviewInboxes: document.getElementById("subview-inboxes"),
+    subviewCompose: document.getElementById("subview-compose"),
+    composePrereqBanner: document.getElementById("compose-prereq-banner"),
+    composeActiveLayout: document.getElementById("compose-active-layout"),
+    composeGoSimBtn: document.getElementById("compose-go-sim-btn"),
+    composeCustomerSelect: document.getElementById("compose-customer-select"),
+    composeCustHintText: document.getElementById("compose-cust-hint-text"),
+    composeTypeChips: document.getElementById("compose-type-chips"),
+    composeCategoryChips: document.getElementById("compose-category-chips"),
+    composeItemSelect: document.getElementById("compose-item-select"),
+    composeHighlightSelect: document.getElementById("compose-highlight-select"),
+    composeUrgencyChips: document.getElementById("compose-urgency-chips"),
+    composeEssentialNote: document.getElementById("compose-essential-note"),
+    composeGenerateBtn: document.getElementById("compose-generate-btn"),
+    demoTimeSelector: document.getElementById("demo-time-selector"),
+    compPhoneAvatar: document.getElementById("comp-phone-avatar"),
+    compPhoneName: document.getElementById("comp-phone-name"),
+    compPhoneCount: document.getElementById("comp-phone-count"),
+    compStatusPill: document.getElementById("comp-status-pill"),
+    compNotifsStream: document.getElementById("comp-notifs-stream"),
+    recActCustName: document.getElementById("rec-act-cust-name"),
+    recentActivityList: document.getElementById("recent-activity-list"),
+
+    // Modals & Toasts
+    modalScheduled: document.getElementById("modal-scheduled"),
+    modalSchedCust: document.getElementById("modal-sched-cust"),
+    modalSchedTime: document.getElementById("modal-sched-time"),
+    modalSchedReason: document.getElementById("modal-sched-reason"),
+    modalSchedPreview: document.getElementById("modal-sched-preview"),
+    modalSchedCancelBtn: document.getElementById("modal-sched-cancel-btn"),
+    modalSchedOverrideBtn: document.getElementById("modal-sched-override-btn"),
+    modalSchedOkBtn: document.getElementById("modal-sched-ok-btn"),
+
+    modalNotSent: document.getElementById("modal-not-sent"),
+    modalNotSentCust: document.getElementById("modal-not-sent-cust"),
+    modalNotSentReason: document.getElementById("modal-not-sent-reason"),
+    modalNotSentPreview: document.getElementById("modal-not-sent-preview"),
+    modalNotSentOverrideBtn: document.getElementById("modal-not-sent-override-btn"),
+    modalNotSentOkBtn: document.getElementById("modal-not-sent-ok-btn"),
+
+    modalConfirmOverride: document.getElementById("modal-confirm-override"),
+    modalConfirmCancelBtn: document.getElementById("modal-confirm-cancel-btn"),
+    modalConfirmProceedBtn: document.getElementById("modal-confirm-proceed-btn"),
+
+    toastContainer: document.getElementById("toast-container"),
     
     // Tab 3 Elements
     metricEngaged: document.getElementById("metric-engaged"),
@@ -90,6 +152,22 @@
     insDecisionsContainer: document.getElementById("ins-decisions-container"),
     insRecActionTitle: document.getElementById("ins-rec-action-title"),
     insRecActionDesc: document.getElementById("ins-rec-action-desc")
+  };
+
+  const COMPOSE_CATEGORY_ITEMS = {
+    "Fashion": ["Sneakers", "Denim jacket", "Handbag", "Watch"],
+    "Electronics": ["Wireless headphones", "Smartwatch", "Power bank", "Bluetooth speaker"],
+    "Home & Kitchen": ["Air fryer", "Bedsheet set", "Cookware set", "Table lamp"],
+    "Beauty": ["Face serum", "Perfume", "Sunscreen", "Lipstick set"],
+    "Groceries": ["Fresh fruits box", "Snack combo", "Organic staples", "Coffee beans"],
+    "Sports": ["Running shoes", "Yoga mat", "Cricket bat", "Gym gloves"]
+  };
+
+  const COMPOSE_TYPE_HIGHLIGHTS = {
+    "offer": ["20% off", "40% off", "Buy 1 Get 1", "Free delivery"],
+    "new_arrival": ["Just launched", "Back in stock", "Limited edition", "Trending now"],
+    "price_drop": ["Price just dropped", "Lowest this month", "Only a few left"],
+    "order_update": ["Shipped", "Out for delivery", "Delivered", "Delayed"]
   };
 
   // SVGs for categories
@@ -209,6 +287,9 @@
     try {
       await fetch("/api/reset", { method: "POST" });
       dom.resetModal.classList.add("hidden");
+      for (const k in cachedRecentActivity) delete cachedRecentActivity[k];
+      appState.demoTime = "afternoon";
+      appState.composeState.lastEvaluatedItem = null;
       await fetchState();
       switchTab("tab-simulate");
     } catch (err) {
@@ -235,6 +316,15 @@
 
   function handleKeyboardNav(e) {
     if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+
+    if (e.key === "Escape") {
+      if (appState.activeModal) {
+        closeModal(appState.activeModal);
+      }
+      dom.resetModal.classList.add("hidden");
+      dom.continuedDrawer.classList.add("hidden");
+      return;
+    }
 
     if (e.key === "ArrowRight") {
       if (appState.activeTab === "tab-simulate") switchTab("tab-notifications");
@@ -497,7 +587,33 @@
   }
 
   // --- TAB 2: Customer Notifications ---
+  function switchTab2Subview(subview) {
+    appState.tab2Subview = subview;
+    if (subview === "inboxes") {
+      dom.segInboxesBtn.classList.add("active");
+      dom.segInboxesBtn.setAttribute("aria-selected", "true");
+      dom.segComposeBtn.classList.remove("active");
+      dom.segComposeBtn.setAttribute("aria-selected", "false");
+      dom.subviewInboxes.classList.remove("hidden");
+      dom.subviewCompose.classList.add("hidden");
+      renderTab2Inboxes();
+    } else {
+      dom.segComposeBtn.classList.add("active");
+      dom.segComposeBtn.setAttribute("aria-selected", "true");
+      dom.segInboxesBtn.classList.remove("active");
+      dom.segInboxesBtn.setAttribute("aria-selected", "false");
+      dom.subviewCompose.classList.remove("hidden");
+      dom.subviewInboxes.classList.add("hidden");
+      renderTab2Compose();
+    }
+  }
+
   function renderTab2() {
+    renderTab2Inboxes();
+    renderTab2Compose();
+  }
+
+  function renderTab2Inboxes() {
     const custs = appState.customers;
     const sel = appState.selectedCustomer;
     if (!sel) return;
@@ -608,7 +724,7 @@
         dom.outNotifsStream.innerHTML = notifs
           .map(
             (n) => `
-            <div class="output-notif-card">
+            <div class="output-notif-card ${n._slideIn ? "slide-in" : ""}">
               <div class="output-notif-top">
                 <span class="category-tag ${n.type}">
                   ${CATEGORY_ICONS[n.type]}
@@ -623,6 +739,437 @@
           )
           .join("");
       }
+    }
+  }
+
+  // --- TAB 2 SUBVIEW 2: Send a Notification ---
+  const cachedRecentActivity = {};
+
+  async function fetchRecentActivity(cid) {
+    try {
+      const res = await fetch(`/api/compose/activity?customer_id=${cid}`);
+      const data = await res.json();
+      if (data.ok) {
+        cachedRecentActivity[cid] = data.items || [];
+        renderRecentActivity(cid);
+      }
+    } catch (e) {
+      console.error("Failed to fetch activity:", e);
+    }
+  }
+
+  function renderRecentActivity(cid) {
+    const items = cachedRecentActivity[cid] || [];
+    if (!dom.recentActivityList) return;
+
+    if (items.length === 0) {
+      dom.recentActivityList.innerHTML = `<div class="recent-act-empty">No recent composed activity for this customer.</div>`;
+      return;
+    }
+
+    dom.recentActivityList.innerHTML = items
+      .map((item) => {
+        let chipHtml = "";
+        let actionLinkHtml = "";
+
+        if (item.status === "sent") {
+          chipHtml = `
+            <span class="recent-act-chip sent">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Sent now</span>
+            </span>
+          `;
+        } else if (item.status === "scheduled") {
+          chipHtml = `
+            <span class="recent-act-chip scheduled">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span>${item.scheduled_time || "Scheduled"}</span>
+            </span>
+          `;
+          actionLinkHtml = `<button type="button" class="recent-act-link btn-cancel-sched" data-item-id="${item.id}">Cancel</button>`;
+        } else if (item.status === "cancelled") {
+          chipHtml = `
+            <span class="recent-act-chip not_sent">
+              <span>Cancelled</span>
+            </span>
+          `;
+        } else {
+          chipHtml = `
+            <span class="recent-act-chip not_sent">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+              <span>Not sent</span>
+            </span>
+          `;
+          actionLinkHtml = `<button type="button" class="recent-act-link btn-override-send" data-item-id="${item.id}">Send anyway</button>`;
+        }
+
+        return `
+          <div class="recent-act-item">
+            <div class="recent-act-left">
+              ${chipHtml}
+              <span class="recent-act-text" title="${item.text}">${item.item || item.type_name}: ${item.highlight || item.text}</span>
+            </div>
+            ${actionLinkHtml}
+          </div>
+        `;
+      })
+      .join("");
+
+    dom.recentActivityList.querySelectorAll(".btn-cancel-sched").forEach((btn) => {
+      btn.addEventListener("click", () => handleCancelSchedule(btn.getAttribute("data-item-id")));
+    });
+    dom.recentActivityList.querySelectorAll(".btn-override-send").forEach((btn) => {
+      btn.addEventListener("click", () => handleOverride(btn.getAttribute("data-item-id")));
+    });
+  }
+
+  function renderTab2Compose() {
+    if (!dom.composeActiveLayout) return;
+
+    if (!appState.systemRun) {
+      dom.composePrereqBanner.classList.remove("hidden");
+      dom.composeActiveLayout.classList.add("hidden");
+      return;
+    }
+
+    dom.composePrereqBanner.classList.add("hidden");
+    dom.composeActiveLayout.classList.remove("hidden");
+
+    // 1. Customer Select Options
+    const custs = appState.customers;
+    const currentCompId = appState.composeState.customerId || (appState.selectedCustomer ? appState.selectedCustomer.id : (custs[0] ? custs[0].id : "aarav"));
+    appState.composeState.customerId = currentCompId;
+
+    dom.composeCustomerSelect.innerHTML = custs
+      .map((c) => {
+        const isSel = c.id === currentCompId;
+        const unsubText = c.is_unsubscribed ? " (Unsubscribed)" : "";
+        const role = c.role_hint ? ` — ${c.role_hint}` : "";
+        const style = c.is_unsubscribed ? "style='color:var(--text-muted);'" : "";
+        return `<option value="${c.id}" ${isSel ? "selected" : ""} ${style}>${c.name}${role}${unsubText}</option>`;
+      })
+      .join("");
+
+    const compCust = custs.find((c) => c.id === currentCompId) || appState.selectedCustomer;
+    if (dom.composeCustHintText && compCust) {
+      if (compCust.is_unsubscribed) {
+        dom.composeCustHintText.textContent = `${compCust.name} has unsubscribed. All alerts will be rejected.`;
+      } else if (compCust.analysis && compCust.analysis.risk_level === "High") {
+        dom.composeCustHintText.textContent = `${compCust.name} is close to leaving (${compCust.role_hint}). Only Order Updates can be sent.`;
+      } else if (compCust.id === "aarav") {
+        dom.composeCustHintText.textContent = `Aarav loves offers & sales! Try generating an Offer in the morning.`;
+      } else if (compCust.id === "kabir") {
+        dom.composeCustHintText.textContent = `Kabir likes price drops, but ignores offers. Usually active in the morning.`;
+      } else if (compCust.id === "diya") {
+        dom.composeCustHintText.textContent = `Diya only cares about Order Updates. Promotional alerts will be blocked to prevent churn.`;
+      } else if (compCust.id === "sanya") {
+        dom.composeCustHintText.textContent = `Sanya is a fan of New Arrivals! Try generating a New Arrival alert.`;
+      } else if (compCust.id === "vivaan") {
+        dom.composeCustHintText.textContent = `Vivaan is highly engaged and opens most notifications.`;
+      } else if (compCust.id === "anaya") {
+        dom.composeCustHintText.textContent = `Anaya skims quickly and taps Price Drops.`;
+      } else if (compCust.id === "meera") {
+        dom.composeCustHintText.textContent = `Meera loves offers! Try generating an Offer alert.`;
+      } else if (compCust.id === "ishita" || compCust.id === "rohan") {
+        dom.composeCustHintText.textContent = `${compCust.name} is at risk of leaving (${compCust.role_hint}). Try sending an Order Update.`;
+      } else {
+        dom.composeCustHintText.textContent = `${compCust.name}: ${compCust.role_hint || "Test personalized delivery"}.`;
+      }
+    }
+
+    // 2. Notification Type Chips
+    dom.composeTypeChips.querySelectorAll(".chip-option-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.getAttribute("data-type") === appState.composeState.type);
+    });
+
+    // 3. Category Chips
+    dom.composeCategoryChips.querySelectorAll(".chip-option-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.getAttribute("data-cat") === appState.composeState.category);
+    });
+
+    // 4. Items Select (dependent on category)
+    const validItems = COMPOSE_CATEGORY_ITEMS[appState.composeState.category] || [];
+    if (!validItems.includes(appState.composeState.item)) {
+      appState.composeState.item = validItems[0] || "";
+    }
+    dom.composeItemSelect.innerHTML = validItems
+      .map((item) => `<option value="${item}" ${item === appState.composeState.item ? "selected" : ""}>${item}</option>`)
+      .join("");
+
+    // 5. Highlights Select (dependent on type)
+    const validHighlights = COMPOSE_TYPE_HIGHLIGHTS[appState.composeState.type] || [];
+    if (!validHighlights.includes(appState.composeState.highlight)) {
+      appState.composeState.highlight = validHighlights[0] || "";
+    }
+    dom.composeHighlightSelect.innerHTML = validHighlights
+      .map((h) => `<option value="${h}" ${h === appState.composeState.highlight ? "selected" : ""}>${h}</option>`)
+      .join("");
+
+    // 6. Urgency (Fixed essential if Order Update)
+    if (appState.composeState.type === "order_update") {
+      dom.composeUrgencyChips.classList.add("hidden");
+      dom.composeEssentialNote.classList.remove("hidden");
+      appState.composeState.urgency = "essential";
+    } else {
+      dom.composeUrgencyChips.classList.remove("hidden");
+      dom.composeEssentialNote.classList.add("hidden");
+      if (appState.composeState.urgency === "essential") {
+        appState.composeState.urgency = "normal";
+      }
+      dom.composeUrgencyChips.querySelectorAll(".chip-option-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.getAttribute("data-urgency") === appState.composeState.urgency);
+      });
+    }
+
+    // Button disabled state
+    dom.composeGenerateBtn.disabled = appState.composeState.isSubmitting || !appState.composeState.item || !appState.composeState.highlight;
+
+    // Right Column Preview
+    const compCust = custs.find((c) => c.id === currentCompId) || appState.selectedCustomer;
+    if (compCust) {
+      dom.compPhoneAvatar.textContent = compCust.initials;
+      dom.compPhoneName.textContent = compCust.name;
+      dom.recActCustName.textContent = compCust.name;
+
+      const isUnsub = compCust.is_unsubscribed || (compCust.analysis && compCust.analysis.is_unsubscribed);
+      const notifs = compCust.continued_notifications || [];
+
+      if (isUnsub) {
+        dom.compStatusPill.className = "status-indicator-pill unsubscribed";
+        dom.compStatusPill.textContent = "Unsubscribed";
+        dom.compPhoneCount.textContent = "No notifications";
+        dom.compNotifsStream.innerHTML = `
+          <div class="empty-phone-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+            </svg>
+            <div class="empty-phone-title">No notifications</div>
+            <p>Customer has unsubscribed from all communication.</p>
+          </div>
+        `;
+      } else {
+        const statusClass = compCust.analysis ? compCust.analysis.status : (compCust.status || "not_played");
+        dom.compStatusPill.className = `status-indicator-pill ${statusClass}`;
+        dom.compStatusPill.textContent = compCust.status_label || (compCust.analysis ? compCust.analysis.status_label : "Not played");
+        dom.compPhoneCount.textContent = `${notifs.length} notifications this week`;
+
+        if (notifs.length === 0) {
+          dom.compNotifsStream.innerHTML = `
+            <div class="empty-phone-state">
+              <div class="empty-phone-title">No notifications scheduled</div>
+              <p>Generate a notification on the left to test delivery.</p>
+            </div>
+          `;
+        } else {
+          dom.compNotifsStream.innerHTML = notifs
+            .map(
+              (n) => `
+              <div class="output-notif-card ${n._slideIn ? "slide-in" : ""}">
+                <div class="output-notif-top">
+                  <span class="category-tag ${n.type}">
+                    ${CATEGORY_ICONS[n.type]}
+                    <span>${n.type_name}</span>
+                    ${n.is_recheck ? `<span class="recheck-badge">Re-check</span>` : ""}
+                  </span>
+                  <span class="notif-time">${n.day}, ${n.time}</span>
+                </div>
+                <div class="sim-notif-text">${n.text}</div>
+              </div>
+            `
+            )
+            .join("");
+        }
+      }
+
+      fetchRecentActivity(currentCompId);
+    }
+
+    // Demo Time Buttons active state
+    dom.demoTimeSelector.querySelectorAll(".demo-time-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.getAttribute("data-time") === appState.demoTime);
+    });
+  }
+
+  // --- Modals & Toasts ---
+  function showToast(message, type = "success") {
+    if (!dom.toastContainer) return;
+    const toast = document.createElement("div");
+    toast.className = `toast-item toast-${type}`;
+    const icon = type === "success"
+      ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--status-green);flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>`
+      : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--accent-primary);flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`;
+    toast.innerHTML = `${icon}<span>${message}</span>`;
+    dom.toastContainer.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transition = "opacity 0.3s ease";
+      setTimeout(() => toast.remove(), 300);
+    }, 3500);
+  }
+
+  function openModal(modalEl) {
+    if (appState.activeModal) {
+      appState.activeModal.classList.add("hidden");
+    }
+    modalEl.classList.remove("hidden");
+    appState.activeModal = modalEl;
+    const focusable = modalEl.querySelector("button, [tabindex='0']");
+    if (focusable) focusable.focus();
+  }
+
+  function closeModal(modalEl) {
+    modalEl.classList.add("hidden");
+    if (appState.activeModal === modalEl) {
+      appState.activeModal = null;
+    }
+  }
+
+  let pendingOverrideItemId = null;
+
+  async function handleGenerateNotification() {
+    if (appState.composeState.isSubmitting) return;
+    appState.composeState.isSubmitting = true;
+    renderTab2Compose();
+
+    try {
+      const payload = {
+        customer_id: appState.composeState.customerId,
+        type: appState.composeState.type,
+        category: appState.composeState.category,
+        item: appState.composeState.item,
+        highlight: appState.composeState.highlight,
+        urgency: appState.composeState.urgency,
+        demo_time: appState.demoTime
+      };
+
+      const res = await fetch("/api/compose/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        let msg = data.detail || "Could not generate notification";
+        if (msg === "Not Found" || res.status === 404) {
+          msg = "Please ensure the system is running and refresh the page.";
+        }
+        showToast(msg, "info");
+        return;
+      }
+
+      appState.composeState.lastEvaluatedItem = data.item;
+      await fetchState();
+
+      if (data.item.decision === "send_now") {
+        const compCust = appState.customers.find((c) => c.id === appState.composeState.customerId);
+        if (compCust && compCust.continued_notifications && compCust.continued_notifications.length > 0) {
+          compCust.continued_notifications[0]._slideIn = true;
+        }
+        renderTab2();
+        showToast(`Sent to ${data.item.customer_name}`, "success");
+      } else if (data.item.decision === "schedule") {
+        dom.modalSchedCust.textContent = `Customer: ${data.item.customer_name}`;
+        dom.modalSchedTime.textContent = data.item.scheduled_time || "Scheduled";
+        dom.modalSchedReason.textContent = data.item.reason;
+        dom.modalSchedPreview.textContent = data.item.text;
+        openModal(dom.modalScheduled);
+      } else {
+        dom.modalNotSentCust.textContent = `Customer: ${data.item.customer_name}`;
+        dom.modalNotSentReason.textContent = data.item.reason;
+        dom.modalNotSentPreview.textContent = data.item.text;
+        openModal(dom.modalNotSent);
+      }
+
+      fetchRecentActivity(appState.composeState.customerId);
+    } catch (err) {
+      console.error("Failed to generate notification:", err);
+      showToast("Failed to generate notification", "info");
+    } finally {
+      appState.composeState.isSubmitting = false;
+      renderTab2Compose();
+    }
+  }
+
+  function handleOverride(itemId) {
+    pendingOverrideItemId = itemId;
+    openModal(dom.modalConfirmOverride);
+  }
+
+  async function executeOverride(itemId) {
+    try {
+      const res = await fetch("/api/compose/override", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ item_id: itemId })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        closeModal(dom.modalConfirmOverride);
+        if (dom.modalScheduled) closeModal(dom.modalScheduled);
+        if (dom.modalNotSent) closeModal(dom.modalNotSent);
+
+        await fetchState();
+        const compCust = appState.customers.find((c) => c.id === data.item.customer_id);
+        if (compCust && compCust.continued_notifications && compCust.continued_notifications.length > 0) {
+          compCust.continued_notifications[0]._slideIn = true;
+        }
+        renderTab2();
+        showToast(`Sent to ${data.item.customer_name}`, "success");
+        fetchRecentActivity(data.item.customer_id);
+      }
+    } catch (e) {
+      console.error("Override failed:", e);
+    }
+  }
+
+  async function handleCancelSchedule(itemId) {
+    try {
+      const res = await fetch("/api/compose/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ item_id: itemId })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        closeModal(dom.modalScheduled);
+        fetchRecentActivity(appState.composeState.customerId);
+        showToast("Schedule cancelled", "info");
+      }
+    } catch (e) {
+      console.error("Cancel failed:", e);
+    }
+  }
+
+  async function handleAdvanceDemoTime(timeSlot) {
+    try {
+      appState.demoTime = timeSlot;
+      dom.demoTimeSelector.querySelectorAll(".demo-time-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.getAttribute("data-time") === timeSlot);
+      });
+
+      const res = await fetch("/api/compose/advance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ demo_time: timeSlot })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        await fetchState();
+        if (data.delivered_items && data.delivered_items.length > 0) {
+          data.delivered_items.forEach((item) => {
+            showToast(`Scheduled notification delivered to ${item.customer_name}`, "success");
+          });
+          const compCust = appState.customers.find((c) => c.id === appState.composeState.customerId);
+          if (compCust && compCust.continued_notifications && compCust.continued_notifications.length > 0) {
+            compCust.continued_notifications[0]._slideIn = true;
+          }
+        }
+        renderTab2();
+        fetchRecentActivity(appState.composeState.customerId);
+      }
+    } catch (e) {
+      console.error("Advance failed:", e);
     }
   }
 
@@ -1102,6 +1649,138 @@
       dom.continuedDrawer.classList.add("hidden");
     });
     dom.contSubmitBtn.addEventListener("click", submitContinuedDrawer);
+
+    // Tab 2 Segmented Control
+    if (dom.segInboxesBtn && dom.segComposeBtn) {
+      dom.segInboxesBtn.addEventListener("click", () => switchTab2Subview("inboxes"));
+      dom.segComposeBtn.addEventListener("click", () => switchTab2Subview("compose"));
+    }
+
+    // Compose Prereq Button
+    if (dom.composeGoSimBtn) {
+      dom.composeGoSimBtn.addEventListener("click", () => switchTab("tab-simulate"));
+    }
+
+    // Compose Customer Select
+    if (dom.composeCustomerSelect) {
+      dom.composeCustomerSelect.addEventListener("change", async (e) => {
+        appState.composeState.customerId = e.target.value;
+        await selectCustomer(e.target.value);
+        renderTab2Compose();
+      });
+    }
+
+    // Compose Notification Type Chips
+    if (dom.composeTypeChips) {
+      dom.composeTypeChips.querySelectorAll(".chip-option-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          appState.composeState.type = btn.getAttribute("data-type");
+          renderTab2Compose();
+        });
+      });
+    }
+
+    // Compose Category Chips
+    if (dom.composeCategoryChips) {
+      dom.composeCategoryChips.querySelectorAll(".chip-option-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          appState.composeState.category = btn.getAttribute("data-cat");
+          renderTab2Compose();
+        });
+      });
+    }
+
+    // Compose Item Select
+    if (dom.composeItemSelect) {
+      dom.composeItemSelect.addEventListener("change", (e) => {
+        appState.composeState.item = e.target.value;
+        dom.composeGenerateBtn.disabled = appState.composeState.isSubmitting || !appState.composeState.item || !appState.composeState.highlight;
+      });
+    }
+
+    // Compose Highlight Select
+    if (dom.composeHighlightSelect) {
+      dom.composeHighlightSelect.addEventListener("change", (e) => {
+        appState.composeState.highlight = e.target.value;
+        dom.composeGenerateBtn.disabled = appState.composeState.isSubmitting || !appState.composeState.item || !appState.composeState.highlight;
+      });
+    }
+
+    // Compose Urgency Chips
+    if (dom.composeUrgencyChips) {
+      dom.composeUrgencyChips.querySelectorAll(".chip-option-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          appState.composeState.urgency = btn.getAttribute("data-urgency");
+          renderTab2Compose();
+        });
+      });
+    }
+
+    // Generate Notification Button
+    if (dom.composeGenerateBtn) {
+      dom.composeGenerateBtn.addEventListener("click", handleGenerateNotification);
+    }
+
+    // Demo Time Buttons
+    if (dom.demoTimeSelector) {
+      dom.demoTimeSelector.querySelectorAll(".demo-time-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          handleAdvanceDemoTime(btn.getAttribute("data-time"));
+        });
+      });
+    }
+
+    // Scheduled Modal buttons
+    if (dom.modalSchedOkBtn) {
+      dom.modalSchedOkBtn.addEventListener("click", () => closeModal(dom.modalScheduled));
+    }
+    if (dom.modalSchedCancelBtn) {
+      dom.modalSchedCancelBtn.addEventListener("click", () => {
+        if (appState.composeState.lastEvaluatedItem) {
+          handleCancelSchedule(appState.composeState.lastEvaluatedItem.id);
+        }
+      });
+    }
+    if (dom.modalSchedOverrideBtn) {
+      dom.modalSchedOverrideBtn.addEventListener("click", () => {
+        if (appState.composeState.lastEvaluatedItem) {
+          handleOverride(appState.composeState.lastEvaluatedItem.id);
+        }
+      });
+    }
+
+    // Not Sent Modal buttons
+    if (dom.modalNotSentOkBtn) {
+      dom.modalNotSentOkBtn.addEventListener("click", () => closeModal(dom.modalNotSent));
+    }
+    if (dom.modalNotSentOverrideBtn) {
+      dom.modalNotSentOverrideBtn.addEventListener("click", () => {
+        if (appState.composeState.lastEvaluatedItem) {
+          handleOverride(appState.composeState.lastEvaluatedItem.id);
+        }
+      });
+    }
+
+    // Confirm Override Modal buttons
+    if (dom.modalConfirmCancelBtn) {
+      dom.modalConfirmCancelBtn.addEventListener("click", () => closeModal(dom.modalConfirmOverride));
+    }
+    if (dom.modalConfirmProceedBtn) {
+      dom.modalConfirmProceedBtn.addEventListener("click", () => {
+        if (pendingOverrideItemId) {
+          executeOverride(pendingOverrideItemId);
+        }
+      });
+    }
+
+    // Modal Backdrop clicks to close
+    [dom.modalScheduled, dom.modalNotSent, dom.modalConfirmOverride].forEach((m) => {
+      if (m) {
+        m.addEventListener("click", (e) => {
+          if (e.target === m) closeModal(m);
+        });
+      }
+    });
   }
 
   // Kickoff on load

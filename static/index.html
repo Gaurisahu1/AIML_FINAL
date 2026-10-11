@@ -230,98 +230,310 @@
     </section>
 
     <!-- ================================================================= -->
+    <!-- ================================================================= -->
     <!-- TAB 2: CUSTOMER NOTIFICATIONS -->
     <!-- ================================================================= -->
     <section class="tab-panel" id="tab-notifications">
-      <div class="tab-header-strip">
-        <div>
-          <h2 class="tab-title">Customer Notifications</h2>
-          <p class="tab-subtitle">See the exact personalized schedule each customer will receive from now on.</p>
-        </div>
-        <div class="compare-toggle-box">
-          <label class="toggle-switch-wrapper" title="Compare tailored notifications against the uniform 12-alert broadcast">
-            <span class="toggle-label">Compare with before</span>
-            <input type="checkbox" id="compare-toggle">
-            <span class="toggle-slider"></span>
-          </label>
+      <!-- Tab 2 Segmented Control -->
+      <div class="tab2-nav-bar">
+        <div class="segmented-control" role="tablist" aria-label="Customer Notifications View">
+          <button class="seg-btn active" id="seg-inboxes-btn" role="tab" aria-selected="true" data-subview="inboxes">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="seg-icon">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <span>Customer inboxes</span>
+          </button>
+          <button class="seg-btn" id="seg-compose-btn" role="tab" aria-selected="false" data-subview="compose">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="seg-icon">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+            <span>Send a notification</span>
+          </button>
         </div>
       </div>
 
-      <div class="notifications-layout">
-        <!-- Customer Selector Sidebar -->
-        <div class="cust-sidebar">
-          <div class="sidebar-header">
-            <span>Customers</span>
-            <span class="status-legend">
-              <span class="legend-dot green" title="Engaged"></span>
-              <span class="legend-dot amber" title="Losing interest"></span>
-              <span class="legend-dot red" title="At risk of leaving"></span>
-              <span class="legend-dot grey" title="Unsubscribed"></span>
-            </span>
+      <!-- SUBVIEW 1: Customer inboxes (Existing view, selected by default) -->
+      <div class="tab2-subview active" id="subview-inboxes">
+        <div class="tab-header-strip">
+          <div>
+            <h2 class="tab-title">Customer Notifications</h2>
+            <p class="tab-subtitle">See the exact personalized schedule each customer will receive from now on.</p>
           </div>
-          <div class="cust-sidebar-list" id="notif-cust-list">
-            <!-- Injected by JS -->
+          <div class="compare-toggle-box">
+            <label class="toggle-switch-wrapper" title="Compare tailored notifications against the uniform 12-alert broadcast">
+              <span class="toggle-label">Compare with before</span>
+              <input type="checkbox" id="compare-toggle">
+              <span class="toggle-slider"></span>
+            </label>
           </div>
         </div>
 
-        <!-- Phone Output Display -->
-        <div class="phone-wrapper output-phone-wrapper">
-          <div class="phone-device">
-            <div class="phone-notch">
-              <div class="phone-camera"></div>
-              <div class="phone-speaker"></div>
+        <div class="notifications-layout">
+          <!-- Customer Selector Sidebar -->
+          <div class="cust-sidebar">
+            <div class="sidebar-header">
+              <span>Customers</span>
+              <span class="status-legend">
+                <span class="legend-dot green" title="Engaged"></span>
+                <span class="legend-dot amber" title="Losing interest"></span>
+                <span class="legend-dot red" title="At risk of leaving"></span>
+                <span class="legend-dot grey" title="Unsubscribed"></span>
+              </span>
             </div>
+            <div class="cust-sidebar-list" id="notif-cust-list">
+              <!-- Injected by JS -->
+            </div>
+          </div>
 
-            <div class="phone-status-bar">
-              <span class="phone-clock">9:41</span>
-              <div class="phone-status-icons">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L12 22l7.03-4.39C20.26 16.07 21 14.12 21 12c0-4.97-4.03-9-9-9z"/></svg>
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+          <!-- Phone Output Display -->
+          <div class="phone-wrapper output-phone-wrapper">
+            <div class="phone-device">
+              <div class="phone-notch">
+                <div class="phone-camera"></div>
+                <div class="phone-speaker"></div>
               </div>
-            </div>
 
-            <div class="phone-screen" id="output-phone-screen">
-              <div class="phone-screen-header">
-                <div class="phone-cust-badge">
-                  <div class="avatar-mini" id="out-phone-avatar">AA</div>
-                  <div>
-                    <div class="phone-cust-name" id="out-phone-name">Aarav</div>
-                    <div class="phone-count-line" id="out-phone-count">4 notifications this week</div>
-                  </div>
+              <div class="phone-status-bar">
+                <span class="phone-clock">9:41</span>
+                <div class="phone-status-icons">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L12 22l7.03-4.39C20.26 16.07 21 14.12 21 12c0-4.97-4.03-9-9-9z"/></svg>
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
                 </div>
-                <div class="status-indicator-pill" id="out-status-pill">Engaged</div>
               </div>
 
-              <!-- Output Stream -->
-              <div class="phone-notifs-stream" id="out-notifs-stream">
-                <!-- Notifications list -->
+              <div class="phone-screen" id="output-phone-screen">
+                <div class="phone-screen-header">
+                  <div class="phone-cust-badge">
+                    <div class="avatar-mini" id="out-phone-avatar">AA</div>
+                    <div>
+                      <div class="phone-cust-name" id="out-phone-name">Aarav</div>
+                      <div class="phone-count-line" id="out-phone-count">4 notifications this week</div>
+                    </div>
+                  </div>
+                  <div class="status-indicator-pill" id="out-status-pill">Engaged</div>
+                </div>
+
+                <!-- Output Stream -->
+                <div class="phone-notifs-stream" id="out-notifs-stream">
+                  <!-- Notifications list -->
+                </div>
+
+                <!-- Action Bar inside output phone -->
+                <div class="phone-screen-footer" id="out-phone-footer">
+                  <button class="btn btn-primary btn-block" id="continue-customer-btn">
+                    <span>Continue as this customer</span>
+                  </button>
+                </div>
               </div>
 
-              <!-- Action Bar inside output phone -->
-              <div class="phone-screen-footer" id="out-phone-footer">
-                <button class="btn btn-primary btn-block" id="continue-customer-btn">
-                  <span>Continue as this customer</span>
+              <div class="phone-home-indicator"></div>
+            </div>
+          </div>
+
+          <!-- Continued Week Interactive Drawer (Hidden unless continuing) -->
+          <div class="continued-drawer hidden" id="continued-drawer">
+            <div class="drawer-header">
+              <h3>Continuing as <span id="cont-cust-name">Aarav</span></h3>
+              <p>Here is your next tailored week. Review and act on notifications to see how the system adapts live.</p>
+            </div>
+            <div class="drawer-stream" id="cont-notifs-stream">
+              <!-- Continued interactive cards -->
+            </div>
+            <div class="drawer-footer">
+              <button class="btn btn-primary" id="cont-submit-btn" disabled>Submit actions & update</button>
+              <button class="btn btn-ghost" id="cont-cancel-btn">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBVIEW 2: Send a notification -->
+      <div class="tab2-subview hidden" id="subview-compose">
+        <!-- Prerequisite Notice (Shown if Run System has not been completed) -->
+        <div class="compose-prereq-banner" id="compose-prereq-banner">
+          <div class="prereq-card card">
+            <div class="prereq-icon-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            </div>
+            <div class="prereq-text-content">
+              <h3>Run the system first so we can learn what each customer likes.</h3>
+              <p>Simulate customer engagement habits in Tab 1 and click <strong>Run System</strong> to unlock personalized notification testing.</p>
+              <button class="btn btn-secondary btn-sm" id="compose-go-sim-btn">Go to Simulate Customers</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Two-column Compose Interface (Active when system has been run) -->
+        <div class="compose-layout hidden" id="compose-active-layout">
+          <!-- LEFT COLUMN: Create a Notification Form (6 Option-based Inputs) -->
+          <div class="compose-form-col card">
+            <div class="compose-col-header">
+              <h3 class="compose-col-title">Create a notification</h3>
+              <p class="compose-col-subtitle">Choose options to test smart delivery for any customer.</p>
+            </div>
+
+            <form class="compose-form" id="compose-form" onsubmit="return false;">
+              <!-- 1. Customer Select -->
+              <div class="form-group">
+                <label class="form-label" for="compose-customer-select">1. Customer</label>
+                <div class="select-wrapper">
+                  <select class="form-select custom-cust-select" id="compose-customer-select" required>
+                    <!-- Injected by JS: avatar initials, name, status dot. Unsubscribed greyed out but selectable -->
+                  </select>
+                </div>
+                <div class="cust-hint-badge" id="compose-cust-hint">
+                  <span class="hint-icon">&#128161;</span>
+                  <span id="compose-cust-hint-text">Choose a customer to see tailored suggestions</span>
+                </div>
+              </div>
+
+              <!-- 2. Notification Type -->
+              <div class="form-group">
+                <label class="form-label">2. Notification type</label>
+                <div class="chip-select-group" id="compose-type-chips">
+                  <button type="button" class="chip-option-btn active" data-type="offer">Offers & Sales</button>
+                  <button type="button" class="chip-option-btn" data-type="new_arrival">New Arrivals</button>
+                  <button type="button" class="chip-option-btn" data-type="price_drop">Price Drops</button>
+                  <button type="button" class="chip-option-btn" data-type="order_update">Order Updates</button>
+                </div>
+              </div>
+
+              <!-- 3. Category -->
+              <div class="form-group">
+                <label class="form-label">3. Category</label>
+                <div class="chip-select-group" id="compose-category-chips">
+                  <button type="button" class="chip-option-btn active" data-cat="Fashion">Fashion</button>
+                  <button type="button" class="chip-option-btn" data-cat="Electronics">Electronics</button>
+                  <button type="button" class="chip-option-btn" data-cat="Home & Kitchen">Home & Kitchen</button>
+                  <button type="button" class="chip-option-btn" data-cat="Beauty">Beauty</button>
+                  <button type="button" class="chip-option-btn" data-cat="Groceries">Groceries</button>
+                  <button type="button" class="chip-option-btn" data-cat="Sports">Sports</button>
+                </div>
+              </div>
+
+              <!-- 4. Item (Options depend on Category) -->
+              <div class="form-group">
+                <label class="form-label" for="compose-item-select">4. Item</label>
+                <div class="select-wrapper">
+                  <select class="form-select" id="compose-item-select" required>
+                    <!-- Injected dynamically based on category -->
+                  </select>
+                </div>
+              </div>
+
+              <!-- 5. Highlight (Options depend on Type) -->
+              <div class="form-group">
+                <label class="form-label" for="compose-highlight-select">5. Highlight</label>
+                <div class="select-wrapper">
+                  <select class="form-select" id="compose-highlight-select" required>
+                    <!-- Injected dynamically based on type -->
+                  </select>
+                </div>
+              </div>
+
+              <!-- 6. Urgency -->
+              <div class="form-group">
+                <label class="form-label">6. Urgency</label>
+                <div class="chip-select-group" id="compose-urgency-chips">
+                  <button type="button" class="chip-option-btn active" data-urgency="normal">Normal</button>
+                  <button type="button" class="chip-option-btn" data-urgency="time_sensitive">Time-sensitive (until midnight)</button>
+                </div>
+                <div class="essential-note-badge hidden" id="compose-essential-note">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  <span>Essential (always delivered)</span>
+                </div>
+              </div>
+
+              <!-- Generate Button -->
+              <div class="compose-btn-row">
+                <button type="button" class="btn btn-primary btn-block btn-lg" id="compose-generate-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="22" y1="2" x2="11" y2="13"/>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                  </svg>
+                  <span>Generate notification</span>
                 </button>
               </div>
+            </form>
+          </div>
+
+          <!-- RIGHT COLUMN: Demo Time + Live Phone + Recent Activity -->
+          <div class="compose-preview-col">
+            <!-- Demo Time Selector Bar -->
+            <div class="demo-time-box card">
+              <div class="demo-time-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="time-clock-icon">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span>Demo time (Thursday):</span>
+              </div>
+              <div class="demo-time-selector" id="demo-time-selector">
+                <button type="button" class="demo-time-btn" data-time="morning">Morning 9:30 AM</button>
+                <button type="button" class="demo-time-btn active" data-time="afternoon">Afternoon 2:00 PM</button>
+                <button type="button" class="demo-time-btn" data-time="evening">Evening 7:30 PM</button>
+                <button type="button" class="demo-time-btn" data-time="late_night">Late night 11:30 PM</button>
+                <button type="button" class="demo-time-btn advance-btn" data-time="next_morning" title="Move to Friday morning to trigger scheduled items">Next day 9:00 AM &rarr;</button>
+              </div>
             </div>
 
-            <div class="phone-home-indicator"></div>
-          </div>
-        </div>
+            <!-- Live Phone Mockup of Selected Customer -->
+            <div class="phone-wrapper compose-phone-wrapper">
+              <div class="phone-device">
+                <div class="phone-notch">
+                  <div class="phone-camera"></div>
+                  <div class="phone-speaker"></div>
+                </div>
 
-        <!-- Continued Week Interactive Drawer (Hidden unless continuing) -->
-        <div class="continued-drawer hidden" id="continued-drawer">
-          <div class="drawer-header">
-            <h3>Continuing as <span id="cont-cust-name">Aarav</span></h3>
-            <p>Here is your next tailored week. Review and act on notifications to see how the system adapts live.</p>
-          </div>
-          <div class="drawer-stream" id="cont-notifs-stream">
-            <!-- Continued interactive cards -->
-          </div>
-          <div class="drawer-footer">
-            <button class="btn btn-primary" id="cont-submit-btn" disabled>Submit actions & update</button>
-            <button class="btn btn-ghost" id="cont-cancel-btn">Close</button>
+                <div class="phone-status-bar">
+                  <span class="phone-clock">9:41</span>
+                  <div class="phone-status-icons">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L12 22l7.03-4.39C20.26 16.07 21 14.12 21 12c0-4.97-4.03-9-9-9z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                  </div>
+                </div>
+
+                <div class="phone-screen" id="compose-phone-screen">
+                  <div class="phone-screen-header">
+                    <div class="phone-cust-badge">
+                      <div class="avatar-mini" id="comp-phone-avatar">AA</div>
+                      <div>
+                        <div class="phone-cust-name" id="comp-phone-name">Aarav</div>
+                        <div class="phone-count-line" id="comp-phone-count">4 notifications this week</div>
+                      </div>
+                    </div>
+                    <div class="status-indicator-pill" id="comp-status-pill">Engaged</div>
+                  </div>
+
+                  <!-- Live Stream -->
+                  <div class="phone-notifs-stream" id="comp-notifs-stream">
+                    <!-- Notifications list injected here -->
+                  </div>
+                </div>
+
+                <div class="phone-home-indicator"></div>
+              </div>
+            </div>
+
+            <!-- Compact Recent Activity (Latest 5 items) -->
+            <div class="card recent-activity-card">
+              <div class="recent-act-header">
+                <span class="card-title">Recent activity for <span id="rec-act-cust-name">Aarav</span></span>
+              </div>
+              <div class="recent-activity-list" id="recent-activity-list">
+                <!-- Activity items injected here -->
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -483,6 +695,89 @@
       </div>
     </div>
   </div>
+
+  <!-- MODAL: Scheduled for Later -->
+  <div class="modal-backdrop hidden" id="modal-scheduled" role="dialog" aria-modal="true" aria-labelledby="modal-sched-title">
+    <div class="modal-box modal-compose-box">
+      <div class="modal-header">
+        <div class="modal-title-with-icon">
+          <div class="modal-icon-badge indigo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <div>
+            <h3 id="modal-sched-title">Scheduled for later</h3>
+            <div class="modal-subtitle" id="modal-sched-cust">Customer: Aarav</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="modal-time-pill" id="modal-sched-time">Today, 7:30 PM</div>
+        <p class="modal-reason-text" id="modal-sched-reason">Usually replies in the evening, so we will send it then.</p>
+        <div class="modal-preview-box">
+          <div class="modal-preview-label">Notification Preview</div>
+          <div class="modal-preview-text" id="modal-sched-preview">Message text...</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" id="modal-sched-cancel-btn">Cancel schedule</button>
+        <button type="button" class="btn btn-secondary" id="modal-sched-override-btn">Send now anyway</button>
+        <button type="button" class="btn btn-primary" id="modal-sched-ok-btn">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Not Sent -->
+  <div class="modal-backdrop hidden" id="modal-not-sent" role="dialog" aria-modal="true" aria-labelledby="modal-not-sent-title">
+    <div class="modal-box modal-compose-box">
+      <div class="modal-header">
+        <div class="modal-title-with-icon">
+          <div class="modal-icon-badge grey">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+            </svg>
+          </div>
+          <div>
+            <h3 id="modal-not-sent-title">Not sent</h3>
+            <div class="modal-subtitle" id="modal-not-sent-cust">Customer: Diya</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-body">
+        <p class="modal-reason-text" id="modal-not-sent-reason">Has ignored the last 5 offers, so this would likely be ignored.</p>
+        <div class="modal-preview-box">
+          <div class="modal-preview-label">Notification Preview</div>
+          <div class="modal-preview-text" id="modal-not-sent-preview">Message text...</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="modal-not-sent-override-btn">Send anyway</button>
+        <button type="button" class="btn btn-primary" id="modal-not-sent-ok-btn">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Send Anyway Confirmation -->
+  <div class="modal-backdrop hidden" id="modal-confirm-override" role="dialog" aria-modal="true" aria-labelledby="modal-confirm-title">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-confirm-title">Send notification anyway?</h3>
+      </div>
+      <div class="modal-body">
+        <p>This customer is unlikely to read this. Send anyway?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" id="modal-confirm-cancel-btn">Cancel</button>
+        <button type="button" class="btn btn-primary" id="modal-confirm-proceed-btn">Send anyway</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
   <!-- LOADING OVERLAY ("Getting to know your customers...") -->
   <div class="loading-overlay hidden" id="loading-overlay">
