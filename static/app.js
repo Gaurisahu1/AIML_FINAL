@@ -925,7 +925,6 @@
     dom.composeGenerateBtn.disabled = appState.composeState.isSubmitting || !appState.composeState.item || !appState.composeState.highlight;
 
     // Right Column Preview
-    const compCust = custs.find((c) => c.id === currentCompId) || appState.selectedCustomer;
     if (compCust) {
       dom.compPhoneAvatar.textContent = compCust.initials;
       dom.compPhoneName.textContent = compCust.name;
