@@ -23,6 +23,26 @@
    pytest tests/test_scenarios.py
    ```
 
+## Deploy to Vercel
+
+The FastAPI app can be deployed from the repository root using Vercel's Python
+runtime. The `.python-version` file selects Python 3.12, and the scikit-learn
+version is pinned to match the saved model.
+
+```bash
+npx vercel
+```
+
+Follow the CLI prompts to log in and link or create a Vercel project. Deploy to
+production with:
+
+```bash
+npx vercel --prod
+```
+
+The demo stores simulation state in memory, so state changes are temporary and
+may not be shared across server instances.
+
 ---
 
 ## Architecture Overview
